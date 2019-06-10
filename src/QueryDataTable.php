@@ -724,16 +724,29 @@ class QueryDataTable extends DataTableAbstract
      */
     protected function showDebugger(array $output)
     {
-	    $query_log = $this->connection->getQueryLog();
-	    array_walk_recursive($query_log, function (&$item, $key)
-	    {
-		    $item = utf8_encode($item);
-	    });
-
-        $output['queries'] = $query_log;
+        $output['queries'] = $this->recursiveLogEncode( $this->connection->getQueryLog() );
         $output['input']   = $this->request->all();
 
         return $output;
+    }
+    
+    /**
+     * Recursive encode log string entries with UTF-8
+     *
+     * @param  array|object $output
+     *
+     * @return array|object
+     */
+    protected function recursiveLogEncode( $log ) {
+        foreach( $log as $key => $data ) {
+            if ( is_string( $data ) ) {
+                $log[$key] = utf8_encode($data);
+            } elseif ( is_array( $data ) || is_object( $data ) ) {
+                $log[$key] = $this->recursiveLogEncode( $data );
+            }
+        }
+        
+        return $log;
     }
 
     /**
